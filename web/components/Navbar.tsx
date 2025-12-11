@@ -90,6 +90,47 @@ export function Navbar() {
     }
   }, []);
 
+  // Update URL hash as user scrolls through sections
+  useEffect(() => {
+    // Only run on home page
+    const currentPath = window.location.pathname;
+    const pathWithoutLocale = currentPath.replace(/^\/(en|ru)/, '') || '/';
+    const isOnHomePage = pathWithoutLocale === '/' || pathWithoutLocale === '';
+    
+    if (!isOnHomePage) return;
+
+    const sections = document.querySelectorAll('[id^="home"], [id^="benefits"], [id^="services"], [id^="pricing"], [id^="process"], [id^="testimonials"], [id^="contact"]');
+    
+    if (sections.length === 0) return;
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the upper portion of viewport
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          if (id) {
+            // Update URL without scrolling
+            const newUrl = `${window.location.pathname}#${id}`;
+            if (window.location.href !== newUrl) {
+              window.history.replaceState(null, '', newUrl);
+            }
+          }
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      sections.forEach((section) => observer.unobserve(section));
+    };
+  }, []);
+
   // Handle smooth scroll for anchor links
   const handleLinkClick = (href: string, e?: React.MouseEvent<HTMLAnchorElement>) => {
     if (href.startsWith('#')) {
