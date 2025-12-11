@@ -32,6 +32,7 @@ export const page = defineType({
         ],
         layout: 'radio',
       },
+      initialValue: 'en',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
