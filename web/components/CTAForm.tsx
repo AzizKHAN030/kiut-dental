@@ -22,17 +22,19 @@ const countries = [
   'Other',
 ];
 
-const treatments = [
-  { value: 'implants', label: 'Dental Implants' },
-  { value: 'veneers', label: 'Veneers' },
-  { value: 'whitening', label: 'Teeth Whitening' },
-  { value: 'crown', label: 'Dental Crown' },
-  { value: 'root-canal', label: 'Root Canal' },
-  { value: 'full-reconstruction', label: 'Full Mouth Reconstruction' },
-  { value: 'other', label: 'Other' },
-];
+interface Treatment {
+  _id: string;
+  name: string;
+  slug?: {
+    current: string;
+  };
+}
 
-export function CTAForm() {
+interface CTAFormProps {
+  treatments?: Treatment[];
+}
+
+export function CTAForm({ treatments = [] }: CTAFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -81,15 +83,15 @@ export function CTAForm() {
     });
   };
 
-  const handleRemoveTreatment = (treatmentValue: string) => {
+  const handleRemoveTreatment = (treatmentId: string) => {
     setFormData(prev => ({
       ...prev,
-      treatments: prev.treatments.filter(t => t !== treatmentValue),
+      treatments: prev.treatments.filter(t => t !== treatmentId),
     }));
   };
 
-  const getTreatmentLabel = (value: string) => {
-    return treatments.find(t => t.value === value)?.label || value;
+  const getTreatmentLabel = (treatmentId: string) => {
+    return treatments.find(t => t._id === treatmentId)?.name || treatmentId;
   };
 
   return (
@@ -235,36 +237,42 @@ export function CTAForm() {
             {/* Dropdown Menu */}
             {isTreatmentDropdownOpen && (
               <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
-                {treatments.map((treatment) => {
-                  const isSelected = formData.treatments.includes(treatment.value);
-                  return (
-                    <button
-                      key={treatment.value}
-                      type="button"
-                      onClick={() => handleTreatmentToggle(treatment.value)}
-                      className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                        isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-900'
-                      }`}
-                    >
-                      <span>{treatment.label}</span>
-                      {isSelected && (
-                        <svg
-                          className="w-5 h-5 text-blue-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  );
-                })}
+                {treatments.length > 0 ? (
+                  treatments.map((treatment) => {
+                    const isSelected = formData.treatments.includes(treatment._id);
+                    return (
+                      <button
+                        key={treatment._id}
+                        type="button"
+                        onClick={() => handleTreatmentToggle(treatment._id)}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                          isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-900'
+                        }`}
+                      >
+                        <span>{treatment.name}</span>
+                        {isSelected && (
+                          <svg
+                            className="w-5 h-5 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="px-4 py-3 text-gray-500 text-center">
+                    No treatments available
+                  </div>
+                )}
               </div>
             )}
           </div>

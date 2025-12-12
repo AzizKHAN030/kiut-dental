@@ -8,37 +8,65 @@ const navLinks = [
   { name: 'Services', href: '#services' },
   { name: 'Pricing', href: '#pricing' },
   { name: 'Process', href: '#process' },
+  { name: 'Gallery', href: '#gallery' },
   { name: 'Testimonials', href: '#testimonials' },
   { name: 'Blog', href: '/blog' },
   { name: 'Contact', href: '#contact' },
 ];
 
-const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-];
-
 const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 
-export function Navbar() {
+interface NavbarProps {
+  locale?: string;
+  locales?: Array<{ code: string; name: string; flag: string }>;
+}
+
+export function Navbar({ locale: initialLocale, locales: providedLocales }: NavbarProps = { locale: undefined, locales: undefined }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [languages, setLanguages] = useState<Array<{ code: string; name: string; flag: string }>>(providedLocales || []);
   
-  // Get current locale from cookie on mount
-  const getCurrentLocale = (): string => {
-    if (typeof document === 'undefined') return 'en';
-    const cookies = document.cookie.split(';');
-    const localeCookie = cookies.find(c => c.trim().startsWith(`${LOCALE_COOKIE_NAME}=`));
-    const locale = localeCookie?.split('=')[1]?.trim() || 'en';
-    return languages.find(l => l.code === locale) ? locale : 'en';
-  };
+  // Update languages when providedLocales prop changes
+  useEffect(() => {
+    if (providedLocales && providedLocales.length > 0) {
+      setLanguages(providedLocales);
+    }
+  }, [providedLocales]);
   
-  const [selectedLang, setSelectedLang] = useState(() => {
-    if (typeof document === 'undefined') return languages[0];
-    const currentLocale = getCurrentLocale();
-    return languages.find(l => l.code === currentLocale) || languages[0];
+  // Initialize selectedLang from the locale prop (server-rendered value)
+  // This ensures hydration matches between server and client
+  const [selectedLang, setSelectedLang] = useState<{ code: string; name: string; flag: string } | null>(() => {
+    // Use the locale prop if provided (from server)
+    if (initialLocale && languages.length > 0) {
+      const lang = languages.find(l => l.code === initialLocale);
+      if (lang) return lang;
+    }
+    
+    // Fallback: try to get from cookie (client-side only, but shouldn't happen if prop is passed)
+    if (typeof document !== 'undefined' && languages.length > 0) {
+      const cookies = document.cookie.split(';');
+      const localeCookie = cookies.find(c => c.trim().startsWith(`${LOCALE_COOKIE_NAME}=`));
+      const locale = localeCookie?.split('=')[1]?.trim();
+      if (locale) {
+        const lang = languages.find(l => l.code === locale);
+        if (lang) return lang;
+      }
+    }
+    
+    // Default to first language if available, otherwise null
+    return languages.length > 0 ? languages[0] : null;
   });
+  
+  // Update selectedLang when locale prop or languages change
+  useEffect(() => {
+    if (initialLocale) {
+      const lang = languages.find(l => l.code === initialLocale);
+      if (lang) {
+        setSelectedLang(lang);
+      }
+    }
+  }, [initialLocale, languages]);
 
   // Check if we're on the blog page
   const [isOnBlogPage, setIsOnBlogPage] = useState(false);
@@ -47,7 +75,13 @@ export function Navbar() {
     const checkBlogPage = () => {
       if (typeof window === 'undefined') return;
       const currentPath = window.location.pathname;
-      const pathWithoutLocale = currentPath.replace(/^\/(en|ru)/, '') || '/';
+      
+      // Build dynamic regex pattern from all available locale codes
+      const localeCodes = languages.map(l => l.code).join('|');
+      const localePattern = new RegExp(`^/(${localeCodes})(/|$)`);
+      
+      // Remove any existing locale prefix
+      const pathWithoutLocale = currentPath.replace(localePattern, '/');
       setIsOnBlogPage(pathWithoutLocale.startsWith('/blog'));
     };
     
@@ -61,7 +95,7 @@ export function Navbar() {
       clearInterval(interval);
       window.removeEventListener('popstate', checkBlogPage);
     };
-  }, []);
+  }, [languages]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -94,7 +128,13 @@ export function Navbar() {
   useEffect(() => {
     // Only run on home page
     const currentPath = window.location.pathname;
-    const pathWithoutLocale = currentPath.replace(/^\/(en|ru)/, '') || '/';
+    
+    // Build dynamic regex pattern from all available locale codes
+    const localeCodes = languages.map(l => l.code).join('|');
+    const localePattern = new RegExp(`^/(${localeCodes})(/|$)`);
+    
+    // Remove any existing locale prefix
+    const pathWithoutLocale = currentPath.replace(localePattern, '/');
     const isOnHomePage = pathWithoutLocale === '/' || pathWithoutLocale === '';
     
     if (!isOnHomePage) return;
@@ -139,7 +179,13 @@ export function Navbar() {
       
       // Check if we're on the home page
       const currentPath = window.location.pathname;
-      const pathWithoutLocale = currentPath.replace(/^\/(en|ru)/, '') || '/';
+      
+      // Build dynamic regex pattern from all available locale codes
+      const localeCodes = languages.map(l => l.code).join('|');
+      const localePattern = new RegExp(`^/(${localeCodes})(/|$)`);
+      
+      // Remove any existing locale prefix
+      const pathWithoutLocale = currentPath.replace(localePattern, '/');
       const isOnHomePage = pathWithoutLocale === '/' || pathWithoutLocale === '';
       
       if (isOnHomePage) {
@@ -152,8 +198,8 @@ export function Navbar() {
         }
       } else {
         // We're on a different page, navigate to home page with hash
-        const locale = getCurrentLocale();
-        const homeUrl = `/${locale}/${href}`;
+        const currentLocale = initialLocale || selectedLang?.code || (languages.length > 0 ? languages[0].code : 'en');
+        const homeUrl = `/${currentLocale}${href}`;
         window.location.href = homeUrl;
       }
     } else {
@@ -164,10 +210,16 @@ export function Navbar() {
   const handleLanguageSelect = (lang: typeof languages[0]) => {
     // Get current pathname without locale
     const currentPath = window.location.pathname;
-    const pathWithoutLocale = currentPath.replace(/^\/(en|ru)/, '') || '/';
+    
+    // Build dynamic regex pattern from all available locale codes
+    const localeCodes = languages.map(l => l.code).join('|');
+    const localePattern = new RegExp(`^/(${localeCodes})(/|$)`);
+    
+    // Remove any existing locale prefix
+    const pathWithoutLocale = currentPath.replace(localePattern, '/');
     
     // Build new URL with selected locale
-    const newPath = `/${lang.code}${pathWithoutLocale}`;
+    const newPath = `/${lang.code}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
     const newUrl = `${window.location.origin}${newPath}${window.location.search}${window.location.hash}`;
     
     // Set the locale cookie
@@ -273,8 +325,12 @@ export function Navbar() {
                   aria-label="Select language"
                 >
                   <Globe className="w-4 h-4" />
-                  <span className="hidden sm:inline">{selectedLang.flag}</span>
-                  <span className="text-sm">{selectedLang.code.toUpperCase()}</span>
+                  {selectedLang && (
+                    <>
+                      <span className="hidden sm:inline">{selectedLang.flag}</span>
+                      <span className="text-sm">{selectedLang.code.toUpperCase()}</span>
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -371,7 +427,7 @@ export function Navbar() {
                   handleLanguageSelect(lang);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  selectedLang.code === lang.code 
+                  selectedLang?.code === lang.code 
                     ? 'bg-blue-50 text-blue-600' 
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}

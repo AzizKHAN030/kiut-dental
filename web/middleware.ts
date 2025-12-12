@@ -1,12 +1,39 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getLocaleFromPath, isLocale, getDefaultLocale, getLocalizedPath } from './lib/i18n';
+import { getLocaleFromPath, getLocalizedPath } from './lib/i18n';
+import { getLocales, getDefaultLocale } from './lib/sanity';
 
 const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
-const DEFAULT_LOCALE = getDefaultLocale();
-const SUPPORTED_LOCALES = ['en', 'ru'];
 
-export function middleware(request: NextRequest) {
+// Cache for locales (refreshed periodically)
+let localeCache: { codes: string[]; default: string; lastFetch: number } | null = null;
+const CACHE_TTL = 1 * 60 * 1000; // 1 minute
+
+async function getSupportedLocales() {
+  // Return cached values if still valid
+  if (localeCache && Date.now() - localeCache.lastFetch < CACHE_TTL) {
+    return localeCache;
+  }
+
+  try {
+    const locales = await getLocales();
+    const defaultLocale = await getDefaultLocale();
+    const codes = locales.map((l: any) => l.code);
+
+    localeCache = {
+      codes,
+      default: defaultLocale,
+      lastFetch: Date.now(),
+    };
+
+    return localeCache;
+  } catch (error) {
+    console.error('Error fetching locales in middleware:', error);
+    throw error;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files, API routes, and Next.js internals
@@ -19,11 +46,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Get supported locales (with caching)
+  const localeConfig = await getSupportedLocales();
+  const SUPPORTED_LOCALES = localeConfig.codes;
+  const DEFAULT_LOCALE = localeConfig.default;
+
   // Check if pathname already has a locale prefix
   const pathLocale = getLocaleFromPath(pathname);
   
   // If pathname has a locale, validate it and proceed
-  if (pathLocale && isLocale(pathLocale)) {
+  if (pathLocale && SUPPORTED_LOCALES.includes(pathLocale)) {
     const response = NextResponse.next();
     
     // Set locale cookie

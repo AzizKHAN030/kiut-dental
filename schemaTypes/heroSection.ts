@@ -21,6 +21,23 @@ export const heroSection = defineType({
         'If set to "single", frontend can hide slider controls even if there are multiple slides.',
     }),
     defineField({
+      name: 'autoplay',
+      title: 'Autoplay',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Enable automatic slide transitions (only applies when display mode is "Slider")',
+      hidden: ({ parent }) => parent?.displayMode !== 'slider',
+    }),
+    defineField({
+      name: 'autoplayInterval',
+      title: 'Autoplay Interval (seconds)',
+      type: 'number',
+      initialValue: 5,
+      validation: (Rule) => Rule.min(2).max(30),
+      description: 'Time in seconds between automatic slide transitions',
+      hidden: ({ parent }) => parent?.displayMode !== 'slider' || !parent?.autoplay,
+    }),
+    defineField({
       name: 'slides',
       title: 'Slides',
       type: 'array',
@@ -28,6 +45,7 @@ export const heroSection = defineType({
         { type: 'heroSlideImageLeft' },
         { type: 'heroSlideImageRight' },
         { type: 'heroSlideBackground' },
+        { type: 'heroSlideImageBanner' },
       ],
       validation: (Rule) => Rule.min(1),
       options: {

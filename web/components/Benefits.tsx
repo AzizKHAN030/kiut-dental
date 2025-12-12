@@ -1,80 +1,107 @@
-import { DollarSign, Clock, Award, Plane, Shield, Stethoscope } from 'lucide-react';
+import Image from 'next/image';
 
-const benefits = [
-  {
-    icon: DollarSign,
-    title: 'Save up to 70%',
-    description: 'Significantly lower costs compared to US, UK, and EU prices without compromising quality.',
-    color: 'from-green-500 to-emerald-500',
-  },
-  {
-    icon: Clock,
-    title: 'Fast Treatment',
-    description: 'No waiting lists. Get your treatment scheduled within days, not months.',
-    color: 'from-blue-500 to-cyan-500',
-  },
-  {
-    icon: Award,
-    title: 'Expert Specialists',
-    description: 'Internationally trained dentists with European and American certifications.',
-    color: 'from-purple-500 to-pink-500',
-  },
-  {
-    icon: Plane,
-    title: 'Travel Assistance',
-    description: 'We help arrange your trip, accommodation, and local transportation.',
-    color: 'from-orange-500 to-red-500',
-  },
-  {
-    icon: Shield,
-    title: 'Quality Guarantee',
-    description: 'International standards with modern equipment and premium materials.',
-    color: 'from-indigo-500 to-purple-500',
-  },
-  {
-    icon: Stethoscope,
-    title: 'Full Care Package',
-    description: 'Complete treatment plan including follow-ups and aftercare support.',
-    color: 'from-teal-500 to-cyan-500',
-  },
-];
+interface FeatureCard {
+  icon?: {
+    asset?: {
+      url: string;
+      metadata?: {
+        dimensions?: {
+          width: number;
+          height: number;
+        };
+      };
+    };
+    alt?: string;
+  };
+  iconBgColor?: {
+    hex: string;
+  };
+  title: string;
+  description?: string;
+  badge?: string;
+}
 
-export function Benefits() {
+interface BenefitsData {
+  _type: string;
+  title?: string;
+  subtitle?: string;
+  items?: FeatureCard[];
+}
+
+interface BenefitsProps {
+  data?: BenefitsData | null;
+}
+
+export function Benefits({ data }: BenefitsProps) {
+  // Return null if no data
+  if (!data || !data.items || data.items.length === 0) {
+    return null;
+  }
+
+  const { title, subtitle, items } = data;
+
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-6">
+        {(title || subtitle) && (
         <div className="text-center mb-16 animate-fade-in-up">
-          <h2 className="mb-4">Why Choose Uzbekistan?</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover the advantages of dental tourism in Uzbekistan - where quality meets affordability
-          </p>
+            {title && <h2 className="mb-4 text-3xl font-semibold">{title}</h2>}
+            {subtitle && (
+              <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>
+            )}
         </div>
+        )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {benefits.map((benefit, index) => (
+          {items.map((item, index) => {
+            const bgColor = item.iconBgColor?.hex || '#3B82F6';
+            
+            return (
             <div
-              key={benefit.title}
+                key={`${item.title}-${index}`}
               className="relative group animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                {/* Icon */}
-                <div
-                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${benefit.color} flex items-center justify-center mb-6 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110`}
-                >
-                  <benefit.icon className="w-7 h-7 text-white" />
-                </div>
+                  {/* Badge */}
+                  {item.badge && (
+                    <div className="absolute top-4 right-4">
+                      <span className="inline-block px-3 py-1 text-xs font-semibold text-white rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
+                        {item.badge}
+                      </span>
+                    </div>
+                  )}
 
-                <h3 className="mb-3">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.description}</p>
+                {/* Icon */}
+                  {item.icon?.asset?.url && (
+                <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 relative overflow-hidden"
+                      style={{ backgroundColor: bgColor }}
+                >
+                      <Image
+                        src={item.icon.asset.url}
+                        alt={item.icon.alt || item.title || 'Feature icon'}
+                        width={28}
+                        height={28}
+                        className="object-contain"
+                      />
+                </div>
+                  )}
+
+                  <h3 className="mb-3">{item.title}</h3>
+                  {item.description && (
+                    <p className="text-gray-600">{item.description}</p>
+                  )}
 
                 {/* Decorative gradient on hover */}
                 <div
-                  className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${benefit.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-5 transition-opacity duration-300"
+                    style={{ backgroundColor: bgColor }}
                 />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

@@ -1,7 +1,18 @@
 import { CTAContent } from './CTAContent';
 import { CTAForm } from './CTAForm';
+import { getTreatments } from '@/lib/sanity';
 
-export function CTA() {
+interface Treatment {
+  _id: string;
+  name: string;
+  slug?: {
+    current: string;
+  };
+}
+
+export async function CTA() {
+  const treatments = await getTreatments();
+
   return (
     <section className="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white relative overflow-hidden">
       {/* Animated background elements */}
@@ -15,7 +26,7 @@ export function CTA() {
 
           {/* Right content - Contact Form */}
           <div className="animate-fade-in-right">
-            <CTAForm />
+            <CTAForm treatments={treatments} />
           </div>
         </div>
       </div>

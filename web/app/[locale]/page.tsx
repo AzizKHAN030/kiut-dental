@@ -11,40 +11,56 @@ import { Blog } from '@/components/Blog';
 import { CTA } from '@/components/CTA';
 import { FloatingTooth } from '@/components/FloatingTooth';
 import { notFound } from 'next/navigation';
-import { isLocale } from '@/lib/i18n';
+import { isLocale, getSupportedLocales } from '@/lib/i18n';
+import { getHeroData, getFeatureCardsData, getPopularTreatmentsData, getPriceComparisonData, getAdditionalServicesData, getProcessData, getGalleryData, getTestimonialsData } from '@/lib/sanity';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
   const resolvedParams = await Promise.resolve(params);
   const locale = resolvedParams?.locale;
   
   // Validate locale
-  if (!locale || !isLocale(locale)) {
+  if (!locale || !(await isLocale(locale))) {
     notFound();
   }
 
+  // Fetch data from Sanity
+  const [heroData, benefitsData, servicesData, priceComparisonData, additionalServicesData, processData, galleryData, testimonialsData, locales] = await Promise.all([
+    getHeroData(locale),
+    getFeatureCardsData(locale),
+    getPopularTreatmentsData(locale),
+    getPriceComparisonData(locale),
+    getAdditionalServicesData(locale),
+    getProcessData(locale),
+    getGalleryData(locale),
+    getTestimonialsData(locale),
+    getSupportedLocales(),
+  ]);
+
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
-      <Navbar />
+      <Navbar locale={locale} locales={locales} />
       <FloatingTooth />
       <div id="home">
-        <Hero />
+        <Hero data={heroData} />
       </div>
       <div id="benefits">
-        <Benefits />
+        <Benefits data={benefitsData} />
       </div>
       <div id="services">
-        <Services />
+        <Services data={servicesData} />
       </div>
       <div id="pricing">
-        <PriceComparison />
+        <PriceComparison data={priceComparisonData} />
       </div>
-      <AdditionalServices />
+      <AdditionalServices data={additionalServicesData} />
       <div id="process">
-        <Process />
+        <Process data={processData} />
       </div>
-      <Gallery />
+      <div id="gallery">
+        <Gallery data={galleryData} />
+      </div>
       <div id="testimonials">
-        <Testimonials />
+        <Testimonials data={testimonialsData} />
       </div>
       <div id="blog">
         <Blog />

@@ -5,7 +5,7 @@ import { Calendar, User, ArrowLeft, Clock, ArrowRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getBlogPost } from '@/lib/sanity';
 import { Navbar } from '@/components/Navbar';
-import { isLocale, getLocalizedPath } from '@/lib/i18n';
+import { isLocale, getLocalizedPath, getSupportedLocales } from '@/lib/i18n';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> | { locale: string; slug: string } }): Promise<Metadata> {
   const resolvedParams = await Promise.resolve(params);
@@ -89,6 +89,30 @@ function transformSanityPost(post: any) {
     ? authorImageUrl 
     : null;
   
+  // Transform categories - handle both treatment objects and legacy string format
+  let categories = [];
+  if (post.categories && Array.isArray(post.categories)) {
+    categories = post.categories.map((cat: any) => {
+      // If it's already a treatment object with _id and name
+      if (cat && typeof cat === 'object' && cat._id && cat.name) {
+        return {
+          _id: cat._id,
+          name: cat.name,
+          slug: cat.slug,
+        };
+      }
+      // Legacy string format (for backward compatibility)
+      if (typeof cat === 'string') {
+        return {
+          _id: cat,
+          name: cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          slug: { current: cat },
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }
+  
   return {
     slug: post.slug?.current || post.slug,
     title: post.title,
@@ -99,7 +123,7 @@ function transformSanityPost(post: any) {
       image: validAuthorImage,
     },
     publishedAt: post.publishedAt,
-    categories: post.categories || [],
+    categories,
     content: transformedContent,
   };
 }
@@ -109,18 +133,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
   const slug = resolvedParams?.slug;
   const locale = resolvedParams?.locale;
   
-  if (!slug || !locale || !isLocale(locale)) {
+  if (!slug || !locale || !(await isLocale(locale))) {
     notFound();
   }
   
+  // Fetch data from Sanity
+  const [sanityPost, locales] = await Promise.all([
+    getBlogPost(slug, locale),
+    getSupportedLocales(),
+  ]);
+  
   let post;
-  try {
-    const sanityPost = await getBlogPost(slug, locale);
-    if (sanityPost) {
-      post = transformSanityPost(sanityPost);
-    }
-  } catch (error) {
-    console.error('Error fetching blog post:', error);
+  if (sanityPost) {
+    post = transformSanityPost(sanityPost);
   }
 
   if (!post) {
@@ -129,7 +154,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      <Navbar locale={locale} locales={locales} />
       {/* Back Button */}
       <div className="container mx-auto px-6 pt-8">
         <Link
@@ -146,12 +171,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {post.categories.map((category: string) => (
+          {post.categories && post.categories.length > 0 && post.categories.map((category) => (
               <span
-                key={category}
+                key={category._id}
                 className="inline-block bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full"
               >
-                {category.replace('-', ' ')}
+                {category.name}
               </span>
             ))}
           </div>

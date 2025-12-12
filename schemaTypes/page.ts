@@ -15,6 +15,7 @@ export const page = defineType({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
+      description: 'Enter the slug (e.g., "home"). The locale will be automatically appended when you publish (e.g., "home-en", "home-ru") to ensure uniqueness. You can also manually enter "home-en" or "home-ru".',
       options: {
         source: 'title',
         maxLength: 96,
@@ -24,15 +25,11 @@ export const page = defineType({
     defineField({
       name: 'locale',
       title: 'Locale',
-      type: 'string',
+      type: 'reference',
+      to: [{ type: 'locale' }],
       options: {
-        list: [
-          { title: 'English', value: 'en' },
-          { title: 'Russian', value: 'ru' },
-        ],
-        layout: 'radio',
+        filter: 'isActive == true',
       },
-      initialValue: 'en',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -43,7 +40,11 @@ export const page = defineType({
           { type: 'heroSection' },
           { type: 'featureCardsSection' },
           { type: 'popularTreatmentsSection' },
+          { type: 'priceComparisonSection' },
+          { type: 'additionalServicesSection' },
           { type: 'processSection' },
+          { type: 'gallerySection' },
+          { type: 'testimonialsSection' },
         ],
       }),
       defineField({

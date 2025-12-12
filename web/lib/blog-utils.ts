@@ -9,7 +9,13 @@ export interface BlogPost {
     image: string | null;
   };
   publishedAt: string;
-  categories: string[];
+  categories: Array<{
+    _id: string;
+    name: string;
+    slug?: {
+      current: string;
+    };
+  }>;
 }
 
 // Helper function to transform Sanity blog post data
@@ -34,6 +40,30 @@ export function transformBlogPost(post: any): BlogPost {
     authorImageUrl = post.author.image;
   }
   
+  // Transform categories - handle both treatment objects and legacy string format
+  let categories = [];
+  if (post.categories && Array.isArray(post.categories)) {
+    categories = post.categories.map((cat: any) => {
+      // If it's already a treatment object with _id and name
+      if (cat && typeof cat === 'object' && cat._id && cat.name) {
+        return {
+          _id: cat._id,
+          name: cat.name,
+          slug: cat.slug,
+        };
+      }
+      // Legacy string format (for backward compatibility)
+      if (typeof cat === 'string') {
+        return {
+          _id: cat,
+          name: cat.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          slug: { current: cat },
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
   return {
     slug: post.slug?.current || post.slug,
     title: post.title,
@@ -44,7 +74,7 @@ export function transformBlogPost(post: any): BlogPost {
       image: authorImageUrl && typeof authorImageUrl === 'string' && authorImageUrl.trim() !== '' ? authorImageUrl : null,
     },
     publishedAt: post.publishedAt,
-    categories: post.categories || [],
+    categories,
   };
 }
 

@@ -4,21 +4,25 @@ import { transformBlogPosts, type BlogPost } from '@/lib/blog-utils';
 import { BlogPostCard } from '@/components/BlogPostCard';
 import { Navbar } from '@/components/Navbar';
 import { notFound } from 'next/navigation';
-import { isLocale, getLocalizedPath } from '@/lib/i18n';
+import { isLocale, getLocalizedPath, getSupportedLocales } from '@/lib/i18n';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> | { locale: string } }): Promise<Metadata> {
   const resolvedParams = await Promise.resolve(params);
   const locale = resolvedParams?.locale;
   
+  // Fetch active locales for language alternates
+  const locales = await getSupportedLocales();
+  const languageAlternates = locales.reduce((acc, loc) => {
+    acc[loc.code] = getLocalizedPath('/blog', loc.code);
+    return acc;
+  }, {} as Record<string, string>);
+  
   return {
     title: 'Blog - Dental Care Articles & Tips | UzDental',
     description: 'Read our latest articles about dental care, treatments, and dental tourism in Uzbekistan.',
     alternates: {
-      canonical: getLocalizedPath('/blog', locale),
-      languages: {
-        'en': getLocalizedPath('/blog', 'en'),
-        'ru': getLocalizedPath('/blog', 'ru'),
-      },
+      canonical: getLocalizedPath('/blog', locale || 'en'),
+      languages: languageAlternates,
     },
   };
 }
@@ -28,23 +32,27 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   const locale = resolvedParams?.locale;
   
   // Validate locale
-  if (!locale || !isLocale(locale)) {
+  if (!locale || !(await isLocale(locale))) {
     notFound();
   }
   
-  // Fetch posts from Sanity
+  // Fetch data from Sanity
+  const [sanityPosts, locales] = await Promise.all([
+    getBlogPosts(locale),
+    getSupportedLocales(),
+  ]);
+  
   let posts: BlogPost[] = [];
   try {
-    const sanityPosts = await getBlogPosts(locale);
     posts = transformBlogPosts(sanityPosts);
   } catch (error) {
-    console.error('Error fetching blog posts:', error);
+    console.error('Error transforming blog posts:', error);
     // posts will remain empty array
   }
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      <Navbar locale={locale} locales={locales} />
       {/* Header */}
       <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-24">
         <div className="container mx-auto px-6">

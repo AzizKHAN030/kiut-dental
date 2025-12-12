@@ -20,8 +20,51 @@ export const heroSlideBackground = defineType({
     defineField({
       name: 'body',
       title: 'Body text',
-      type: 'text',
-      rows: 3,
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [
+            { title: 'Normal', value: 'normal' },
+          ],
+          lists: [],
+          marks: {
+            decorators: [
+              { title: 'Strong', value: 'strong' },
+              { title: 'Emphasis', value: 'em' },
+            ],
+            annotations: [
+              {
+                name: 'link',
+                type: 'object',
+                title: 'Link',
+                fields: [
+                  {
+                    name: 'href',
+                    type: 'string',
+                    title: 'URL',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: 'contentPosition',
+      title: 'Content position',
+      type: 'string',
+      initialValue: 'left',
+      options: {
+        list: [
+          { title: 'Left', value: 'left' },
+          { title: 'Center', value: 'center' },
+          { title: 'Right', value: 'right' },
+        ],
+        layout: 'radio',
+      },
+      description: 'Position of the text content block on the screen.',
     }),
     defineField({
       name: 'primaryCtaLabel',

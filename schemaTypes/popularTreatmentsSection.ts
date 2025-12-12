@@ -27,10 +27,51 @@ export const popularTreatmentsSection = defineType({
           title: 'Treatment',
           fields: [
             defineField({
-              name: 'name',
-              title: 'Treatment name',
+              name: 'nameSource',
+              title: 'Treatment name source',
               type: 'string',
+              options: {
+                list: [
+                  { title: 'Use predefined treatment', value: 'predefined' },
+                  { title: 'Enter custom name', value: 'custom' },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'predefined',
               validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'treatment',
+              title: 'Predefined treatment',
+              type: 'reference',
+              to: [{ type: 'treatment' }],
+              options: {
+                filter: 'isActive == true',
+              },
+              hidden: ({ parent }) => parent?.nameSource !== 'predefined',
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as any;
+                  if (parent?.nameSource === 'predefined' && !value) {
+                    return 'Please select a treatment';
+                  }
+                  return true;
+                }),
+            }),
+            defineField({
+              name: 'customName',
+              title: 'Custom treatment name',
+              type: 'string',
+              description: 'e.g. "Teeth Whitening", "Dental Implant (per tooth)"',
+              hidden: ({ parent }) => parent?.nameSource !== 'custom',
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as any;
+                  if (parent?.nameSource === 'custom' && !value) {
+                    return 'Please enter a treatment name';
+                  }
+                  return true;
+                }),
             }),
             defineField({
               name: 'shortDescription',
@@ -71,6 +112,21 @@ export const popularTreatmentsSection = defineType({
               ],
             }),
           ],
+          preview: {
+            select: {
+              treatmentName: 'treatment.name',
+              customName: 'customName',
+              nameSource: 'nameSource',
+              startingPrice: 'startingPrice',
+            },
+            prepare({ treatmentName, customName, nameSource, startingPrice }) {
+              const displayName = nameSource === 'predefined' ? treatmentName : customName;
+              return {
+                title: displayName || 'Unnamed treatment',
+                subtitle: startingPrice ? `${startingPrice}${nameSource === 'predefined' ? ' • Predefined' : ' • Custom'}` : (nameSource === 'predefined' ? 'Predefined' : 'Custom'),
+              };
+            },
+          },
         },
       ],
     }),

@@ -2,43 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import Image from 'next/image';
 
-const galleryImages = [
-  {
-    url: 'https://images.unsplash.com/photo-1684607632313-ededff0c700e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW50aXN0JTIwY29uc3VsdGF0aW9ufGVufDF8fHx8MTc2NTIxMzM0OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Initial Consultation',
-    description: 'Comprehensive examination and treatment planning',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1600721187850-c944924fd48a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW50YWwlMjB4cmF5JTIwc2NhbnxlbnwxfHx8fDE3NjUyMTMzNTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Digital Diagnostics',
-    description: '3D scans and X-rays for precise treatment',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1588776814601-a454a8e3a940?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW50YWwlMjB0cmVhdG1lbnQlMjBwcm9jZWR1cmV8ZW58MXx8fHwxNzY1MjEzMzUxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Treatment Process',
-    description: 'Expert care with modern technology',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1643216503879-b2c604ce6cf2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW50YWwlMjBpbXBsYW50JTIwc3VyZ2VyeXxlbnwxfHx8fDE3NjUyMTMzNTF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Advanced Procedures',
-    description: 'Implant surgery with precision tools',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1642844819197-5f5f21b89ff8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBkZW50YWwlMjBlcXVpcG1lbnR8ZW58MXx8fHwxNzY1MTg3OTI5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Modern Equipment',
-    description: 'State-of-the-art dental technology',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1630438994394-3deff7a591bf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHBhdGllbnQlMjBzbWlsZXxlbnwxfHx8fDE3NjUxMzQxMjR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    title: 'Happy Results',
-    description: 'Satisfied patients with beautiful smiles',
-  },
-];
+interface GalleryImage {
+  image: {
+    asset?: {
+      url: string;
+      metadata?: {
+        dimensions?: {
+          width: number;
+          height: number;
+        };
+      };
+    };
+    alt?: string;
+  };
+  title: string;
+  description?: string;
+}
 
-export function GalleryLightbox() {
+interface GalleryLightboxProps {
+  images?: GalleryImage[];
+}
+
+export function GalleryLightbox({ images }: GalleryLightboxProps) {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+
+  // Return null if no images
+  if (!images || images.length === 0) return null;
 
   useEffect(() => {
     const handleClick = (e: Event) => {
@@ -56,70 +47,119 @@ export function GalleryLightbox() {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  const handlePrevious = () => {
+  // Keyboard navigation
+  useEffect(() => {
+    if (selectedImage === null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedImage(null);
+      } else if (e.key === 'ArrowLeft') {
+        handlePrevious();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage]);
+
+  // Prevent body scroll when lightbox is open
+  useEffect(() => {
     if (selectedImage !== null) {
-      setSelectedImage(selectedImage === 0 ? galleryImages.length - 1 : selectedImage - 1);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedImage]);
+
+  const handlePrevious = () => {
+    if (selectedImage !== null && images) {
+      setSelectedImage(selectedImage === 0 ? images.length - 1 : selectedImage - 1);
     }
   };
 
   const handleNext = () => {
-    if (selectedImage !== null) {
-      setSelectedImage(selectedImage === galleryImages.length - 1 ? 0 : selectedImage + 1);
+    if (selectedImage !== null && images) {
+      setSelectedImage(selectedImage === images.length - 1 ? 0 : selectedImage + 1);
     }
   };
 
-  if (selectedImage === null) return null;
+  if (selectedImage === null || !images[selectedImage]) return null;
+
+  const currentImage = images[selectedImage];
+  const imageUrl = currentImage.image?.asset?.url;
+
+  if (!imageUrl) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
       onClick={() => setSelectedImage(null)}
     >
       {/* Close button */}
       <button
         onClick={() => setSelectedImage(null)}
-        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
+        aria-label="Close lightbox"
       >
         <X className="w-6 h-6" />
       </button>
 
       {/* Previous button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handlePrevious();
-        }}
-        className="absolute left-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
+      {images.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrevious();
+          }}
+          className="absolute left-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
+          aria-label="Previous image"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Next button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleNext();
-        }}
-        className="absolute right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
+      {images.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNext();
+          }}
+          className="absolute right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
+          aria-label="Next image"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Image */}
       <div
         className="max-w-5xl max-h-[90vh] w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        <ImageWithFallback
-          src={galleryImages[selectedImage].url}
-          alt={galleryImages[selectedImage].title}
-          className="w-full h-full object-contain rounded-lg"
-        />
+        <div className="relative w-full h-[70vh]">
+          <Image
+            src={imageUrl}
+            alt={currentImage.image.alt || currentImage.title || 'Gallery image'}
+            fill
+            className="object-contain rounded-lg"
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            priority
+          />
+        </div>
         <div className="text-center mt-6">
-          <h3 className="text-white mb-2">{galleryImages[selectedImage].title}</h3>
-          <p className="text-white/70">{galleryImages[selectedImage].description}</p>
-          <p className="text-white/50 text-sm mt-2">
-            {selectedImage + 1} / {galleryImages.length}
+          <h3 className="text-white text-2xl mb-2 font-semibold">{currentImage.title}</h3>
+          {currentImage.description && (
+            <p className="text-white/70 text-lg">{currentImage.description}</p>
+          )}
+          <p className="text-white/50 text-sm mt-4">
+            {selectedImage + 1} / {images.length}
           </p>
         </div>
       </div>

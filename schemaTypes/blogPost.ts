@@ -32,15 +32,11 @@ export const blogPost = defineType({
     defineField({
       name: 'locale',
       title: 'Locale',
-      type: 'string',
+      type: 'reference',
+      to: [{ type: 'locale' }],
       options: {
-        list: [
-          { title: 'English', value: 'en' },
-          { title: 'Russian', value: 'ru' },
-        ],
-        layout: 'radio',
+        filter: 'isActive == true',
       },
-      initialValue: 'en',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -90,21 +86,18 @@ export const blogPost = defineType({
     }),
     defineField({
       name: 'categories',
-      title: 'Categories',
+      title: 'Categories / Treatments',
       type: 'array',
-      of: [{ type: 'string' }],
+      of: [
+        {
+          type: 'reference',
+          to: [{ type: 'treatment' }],
+        },
+      ],
       options: {
-        list: [
-          { title: 'Dental Implants', value: 'dental-implants' },
-          { title: 'Veneers', value: 'veneers' },
-          { title: 'Teeth Whitening', value: 'teeth-whitening' },
-          { title: 'Root Canal', value: 'root-canal' },
-          { title: 'Dental Crown', value: 'dental-crown' },
-          { title: 'Dental Tourism', value: 'dental-tourism' },
-          { title: 'Oral Health', value: 'oral-health' },
-          { title: 'Preventive Care', value: 'preventive-care' },
-        ],
+        filter: 'isActive == true',
       },
+      description: 'Select treatments/categories related to this blog post',
     }),
     defineField({
       name: 'content',

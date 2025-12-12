@@ -7,9 +7,43 @@ export const client = createClient({
   apiVersion: '2024-01-01',
 });
 
+// Locale configuration queries
+export async function getLocales() {
+  const query = `*[_type == "locale" && isActive == true] | order(isDefault desc, code asc) {
+    code,
+    name,
+    flag,
+    isDefault,
+    isActive
+  }`;
+  
+  try {
+    return await client.fetch(query);
+  } catch (error) {
+    console.error('Error fetching locales from Sanity:', error);
+    // Fallback to English only if Sanity fails
+    return [
+      { code: 'en', name: 'English', flag: '🇬🇧', isDefault: true, isActive: true },
+    ];
+  }
+}
+
+export async function getDefaultLocale() {
+  const query = `*[_type == "locale" && isDefault == true && isActive == true][0].code`;
+  
+  try {
+    const defaultLocale = await client.fetch(query);
+    return defaultLocale || 'en';
+  } catch (error) {
+    console.error('Error fetching default locale from Sanity:', error);
+    return 'en';
+  }
+}
+
 // Blog post queries
+// Note: locale can be a reference or a string (for backward compatibility)
 export async function getBlogPosts(locale: string = 'en') {
-  const query = `*[_type == "blogPost" && locale == $locale] | order(publishedAt desc) {
+  const query = `*[_type == "blogPost" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale)] | order(publishedAt desc) {
     _id,
     title,
     slug,
@@ -43,7 +77,11 @@ export async function getBlogPosts(locale: string = 'en') {
         }
       }
     },
-    categories,
+    categories[]-> {
+      _id,
+      name,
+      slug
+    },
     featured
   }`;
   
@@ -55,7 +93,7 @@ export async function getBlogPost(slug: string, locale: string = 'en') {
     throw new Error('Invalid slug provided');
   }
 
-  const query = `*[_type == "blogPost" && slug.current == $slug && locale == $locale][0] {
+  const query = `*[_type == "blogPost" && slug.current == $slug && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale)][0] {
     _id,
     title,
     slug,
@@ -91,7 +129,11 @@ export async function getBlogPost(slug: string, locale: string = 'en') {
       alt,
       caption
     },
-    categories,
+    categories[]-> {
+      _id,
+      name,
+      slug
+    },
     content[] {
       ...,
       asset-> {
@@ -117,7 +159,7 @@ export async function getBlogPost(slug: string, locale: string = 'en') {
 }
 
 export async function getFeaturedBlogPosts(locale: string = 'en') {
-  const query = `*[_type == "blogPost" && featured == true && locale == $locale] | order(publishedAt desc) [0...3] {
+  const query = `*[_type == "blogPost" && featured == true && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale)] | order(publishedAt desc) [0...3] {
     _id,
     title,
     slug,
@@ -151,14 +193,18 @@ export async function getFeaturedBlogPosts(locale: string = 'en') {
         }
       }
     },
-    categories
+    categories[]-> {
+      _id,
+      name,
+      slug
+    }
   }`;
   
   return await client.fetch(query, { locale });
 }
 
 export async function getLatestBlogPosts(limit: number = 4, locale: string = 'en') {
-  const query = `*[_type == "blogPost" && locale == $locale] | order(publishedAt desc) [0...${limit}] {
+  const query = `*[_type == "blogPost" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale)] | order(publishedAt desc) [0...${limit}] {
     _id,
     title,
     slug,
@@ -192,9 +238,436 @@ export async function getLatestBlogPosts(limit: number = 4, locale: string = 'en
         }
       }
     },
-    categories
+    categories[]-> {
+      _id,
+      name,
+      slug
+    }
   }`;
   
   return await client.fetch(query, { locale });
+}
+
+// Hero section queries
+// Note: Slugs can be stored with locale suffix (e.g., "home-en", "home-ru") or as "home"
+// The query checks for both formats to support existing and new pages
+// The actual URL routing is handled by Next.js [locale] route
+export async function getHeroData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "heroSection" => {
+        _type,
+        displayMode,
+        autoplay,
+        autoplayInterval,
+        slides[] {
+          _type,
+          tagline,
+          heading,
+          body,
+          contentPosition,
+          overlay,
+          primaryCtaLabel,
+          primaryCtaHref,
+          secondaryCtaLabel,
+          secondaryCtaHref,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          stats[] {
+            value,
+            label
+          },
+          badgeTitle,
+          badgeSubtitle
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the hero section from the sections array
+    const heroSection = result?.sections?.find((section: any) => section._type === 'heroSection');
+    return heroSection || null;
+  } catch (error) {
+    console.error('Error fetching hero data from Sanity:', error);
+    return null;
+  }
+}
+
+// Benefits / Feature Cards section queries
+export async function getFeatureCardsData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "featureCardsSection" => {
+        _type,
+        title,
+        subtitle,
+        items[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          iconBgColor {
+            hex
+          },
+          title,
+          description,
+          badge
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the feature cards section from the sections array
+    const featureCardsSection = result?.sections?.find((section: any) => section._type === 'featureCardsSection');
+    return featureCardsSection || null;
+  } catch (error) {
+    console.error('Error fetching feature cards data from Sanity:', error);
+    return null;
+  }
+}
+
+// Popular Treatments section queries
+export async function getPopularTreatmentsData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "popularTreatmentsSection" => {
+        _type,
+        title,
+        subtitle,
+        treatments[] {
+          nameSource,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          customName,
+          shortDescription,
+          startingPrice,
+          duration,
+          badge,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the popular treatments section from the sections array
+    const popularTreatmentsSection = result?.sections?.find((section: any) => section._type === 'popularTreatmentsSection');
+    return popularTreatmentsSection || null;
+  } catch (error) {
+    console.error('Error fetching popular treatments data from Sanity:', error);
+    return null;
+  }
+}
+
+// Additional Services section queries
+export async function getAdditionalServicesData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "additionalServicesSection" => {
+        _type,
+        title,
+        subtitle,
+        badgeText,
+        services[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          iconBgColor {
+            hex
+          },
+          title,
+          description,
+          included
+        },
+        infoCards[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          title,
+          description,
+          bgColor {
+            hex
+          }
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the additional services section from the sections array
+    const additionalServicesSection = result?.sections?.find((section: any) => section._type === 'additionalServicesSection');
+    return additionalServicesSection || null;
+  } catch (error) {
+    console.error('Error fetching additional services data from Sanity:', error);
+    return null;
+  }
+}
+
+// Process section queries
+export async function getProcessData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "processSection" => {
+        _type,
+        title,
+        subtitle,
+        steps[] {
+          title,
+          description,
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the process section from the sections array
+    const processSection = result?.sections?.find((section: any) => section._type === 'processSection');
+    return processSection || null;
+  } catch (error) {
+    console.error('Error fetching process data from Sanity:', error);
+    return null;
+  }
+}
+
+// Gallery section queries
+export async function getGalleryData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "gallerySection" => {
+        _type,
+        title,
+        subtitle,
+        images[] {
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          title,
+          description
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the gallery section from the sections array
+    const gallerySection = result?.sections?.find((section: any) => section._type === 'gallerySection');
+    return gallerySection || null;
+  } catch (error) {
+    console.error('Error fetching gallery data from Sanity:', error);
+    return null;
+  }
+}
+
+// Treatments queries
+export async function getTreatments() {
+  const query = `*[_type == "treatment" && isActive == true] | order(name asc) {
+    _id,
+    name,
+    slug,
+    description
+  }`;
+  
+  try {
+    return await client.fetch(query);
+  } catch (error) {
+    console.error('Error fetching treatments from Sanity:', error);
+    return [];
+  }
+}
+
+// Testimonials section queries
+export async function getTestimonialsData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "testimonialsSection" => {
+        _type,
+        title,
+        subtitle,
+        testimonials[] {
+          name,
+          country,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          rating,
+          text,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the testimonials section from the sections array
+    const testimonialsSection = result?.sections?.find((section: any) => section._type === 'testimonialsSection');
+    return testimonialsSection || null;
+  } catch (error) {
+    console.error('Error fetching testimonials data from Sanity:', error);
+    return null;
+  }
+}
+
+// Price Comparison section queries
+export async function getPriceComparisonData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type == "priceComparisonSection" => {
+        _type,
+        title,
+        subtitle,
+        countries[] {
+          country-> {
+            name,
+            code,
+            flag
+          },
+          isHighlighted
+        },
+        treatments[] {
+          nameSource,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          customName,
+          prices[] {
+            country-> {
+              code,
+              name
+            },
+            price
+          }
+        },
+        baseCountry-> {
+          code,
+          name
+        },
+        footerNotes[] {
+          title,
+          description
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Extract the price comparison section from the sections array
+    const priceComparisonSection = result?.sections?.find((section: any) => section._type === 'priceComparisonSection');
+    return priceComparisonSection || null;
+  } catch (error) {
+    console.error('Error fetching price comparison data from Sanity:', error);
+    return null;
+  }
 }
 

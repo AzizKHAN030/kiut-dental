@@ -6,10 +6,10 @@ import { getLocalizedPath } from '@/lib/i18n';
 
 interface BlogPostCardProps {
   post: BlogPost;
-  locale?: string;
-}
+  locale: string;
+} 
 
-export function BlogPostCard({ post, locale = 'en' }: BlogPostCardProps) {
+export function BlogPostCard({ post, locale }: BlogPostCardProps) {
   return (
     <article className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group h-full flex flex-col">
       <Link href={getLocalizedPath(`/blog/${post.slug}`, locale)} className="flex flex-col h-full">
@@ -31,12 +31,12 @@ export function BlogPostCard({ post, locale = 'en' }: BlogPostCardProps) {
             </div>
           )}
           <div className="absolute top-4 left-4">
-            {post.categories.map((category: string) => (
+            {post.categories && post.categories.length > 0 && post.categories.map((category) => (
               <span
-                key={category}
+                key={category._id}
                 className="inline-block bg-blue-600 text-white text-xs px-3 py-1 rounded-full mr-2"
               >
-                {category.replace('-', ' ')}
+                {category.name}
               </span>
             ))}
           </div>
