@@ -7,6 +7,12 @@ import { getBlogPost } from '@/lib/sanity';
 import { Navbar } from '@/components/Navbar';
 import { isLocale, getLocalizedPath, getSupportedLocales } from '@/lib/i18n';
 
+type Category = {
+  _id: string;
+  name: string;
+  slug?: { current: string } | string;
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> | { locale: string; slug: string } }): Promise<Metadata> {
   const resolvedParams = await Promise.resolve(params);
   const slug = resolvedParams?.slug;
@@ -171,7 +177,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Categories */}
           <div className="flex flex-wrap gap-2 mb-6">
-          {post.categories && post.categories.length > 0 && post.categories.map((category) => (
+          {post.categories && post.categories.length > 0 && post.categories.map((category: Category) => (
               <span
                 key={category._id}
                 className="inline-block bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full"

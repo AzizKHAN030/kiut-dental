@@ -131,9 +131,27 @@ export function HeroSlider({ slides, autoplay = false, autoplayInterval = 5 }: H
       case 'heroSlideImageRight':
         return <HeroSlideImageRight key={index} {...slideProps} />;
       case 'heroSlideBackground':
-        return <HeroSlideBackground key={index} {...slideProps} />;
+        // Filter contentPosition to only valid values for HeroSlideBackground
+        const backgroundProps = {
+          ...slideProps,
+          contentPosition: (slideProps.contentPosition === 'left' || 
+                          slideProps.contentPosition === 'center' || 
+                          slideProps.contentPosition === 'right')
+            ? slideProps.contentPosition
+            : 'left' as 'left' | 'center' | 'right',
+        };
+        return <HeroSlideBackground key={index} {...backgroundProps} />;
       case 'heroSlideImageBanner':
-        return <HeroSlideImageBanner key={index} {...slideProps} />;
+        // Filter contentPosition to only valid values for HeroSlideImageBanner
+        const bannerProps = {
+          ...slideProps,
+          contentPosition: (slideProps.contentPosition === 'top' || 
+                          slideProps.contentPosition === 'center' || 
+                          slideProps.contentPosition === 'bottom')
+            ? slideProps.contentPosition
+            : 'center' as 'top' | 'center' | 'bottom',
+        };
+        return <HeroSlideImageBanner key={index} {...bannerProps} />;
       default:
         return <HeroSlideImageRight key={index} {...slideProps} />;
     }

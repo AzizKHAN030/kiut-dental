@@ -86,9 +86,27 @@ export function Hero({ data }: HeroProps) {
       case 'heroSlideImageRight':
         return <HeroSlideImageRight {...slideProps} />;
       case 'heroSlideBackground':
-        return <HeroSlideBackground {...slideProps} />;
+        // Filter contentPosition to only valid values for HeroSlideBackground
+        const backgroundProps = {
+          ...slideProps,
+          contentPosition: (slideProps.contentPosition === 'left' || 
+                          slideProps.contentPosition === 'center' || 
+                          slideProps.contentPosition === 'right')
+            ? slideProps.contentPosition
+            : 'left' as 'left' | 'center' | 'right',
+        };
+        return <HeroSlideBackground {...backgroundProps} />;
       case 'heroSlideImageBanner':
-        return <HeroSlideImageBanner {...slideProps} />;
+        // Filter contentPosition to only valid values for HeroSlideImageBanner
+        const bannerProps = {
+          ...slideProps,
+          contentPosition: (slideProps.contentPosition === 'top' || 
+                          slideProps.contentPosition === 'center' || 
+                          slideProps.contentPosition === 'bottom')
+            ? slideProps.contentPosition
+            : 'center' as 'top' | 'center' | 'bottom',
+        };
+        return <HeroSlideImageBanner {...bannerProps} />;
       default:
         return <HeroSlideImageRight {...slideProps} />;
     }
