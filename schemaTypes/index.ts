@@ -2,6 +2,7 @@ import { page } from './page';
 import { heroSection } from './heroSection';
 import { featureCardsSection } from './featureCardsSection';
 import { seo } from './seo';
+import { footer } from './footer';
 import { processSection } from './processSection';
 import { popularTreatmentsSection } from './popularTreatmentsSection';
 import { priceComparisonSection } from './priceComparisonSection';
@@ -18,4 +19,4 @@ import { blogPost } from './blogPost';
 import { locale } from './locale';
 
 
-export const schemaTypes = [locale, country, treatment, page, heroSection, featureCardsSection, seo, processSection, popularTreatmentsSection, priceComparisonSection, additionalServicesSection, gallerySection, testimonialsSection, heroSlideBackground, heroSlideImageLeft, heroSlideImageRight, heroSlideImageBanner, blogPost];
+export const schemaTypes = [locale, country, treatment, page, heroSection, featureCardsSection, seo, footer, processSection, popularTreatmentsSection, priceComparisonSection, additionalServicesSection, gallerySection, testimonialsSection, heroSlideBackground, heroSlideImageLeft, heroSlideImageRight, heroSlideImageBanner, blogPost];

@@ -52,5 +52,10 @@ export const page = defineType({
         title: 'SEO',
         type: 'seo',
       }),
+      defineField({
+        name: 'footer',
+        title: 'Footer',
+        type: 'footer',
+      }),
   ],
 });

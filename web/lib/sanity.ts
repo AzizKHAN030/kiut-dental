@@ -1053,3 +1053,53 @@ export async function getNavLinks(locale: string = 'en') {
   }
 }
 
+// Footer query
+export async function getFooterData(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    footer {
+      title,
+      subtitle,
+      phone {
+        number,
+        href,
+        show
+      },
+      email {
+        address,
+        show
+      },
+      whatsapp {
+        number,
+        href,
+        show
+      },
+      telegram {
+        username,
+        href,
+        show
+      },
+      facebook {
+        url,
+        show
+      },
+      address {
+        text,
+        show
+      },
+      googleMaps {
+        show,
+        iframeCode
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    return result?.footer || null;
+  } catch (error) {
+    console.error('Error fetching footer data from Sanity:', error);
+    return null;
+  }
+}
+

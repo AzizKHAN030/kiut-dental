@@ -12,7 +12,7 @@ import { CTA } from '@/components/CTA';
 import { FloatingTooth } from '@/components/FloatingTooth';
 import { notFound } from 'next/navigation';
 import { isLocale, getSupportedLocales } from '@/lib/i18n';
-import { getPageSections, getNavLinks } from '@/lib/sanity';
+import { getPageSections, getNavLinks, getFooterData } from '@/lib/sanity';
 
 // Component mapping for section types
 const sectionComponents: Record<string, React.ComponentType<{ data: any }>> = {
@@ -36,10 +36,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   }
 
   // Fetch sections in order and other data from Sanity
-  const [sections, locales, navLinks] = await Promise.all([
+  const [sections, locales, navLinks, footerData] = await Promise.all([
     getPageSections(locale),
     getSupportedLocales(),
     getNavLinks(locale),
+    getFooterData(locale),
   ]);
 
   return (
@@ -90,7 +91,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <Blog />
         </div>
         <div id="contact">
-          <CTA />
+          <CTA footerData={footerData} />
         </div>
       </main>
     </div>
