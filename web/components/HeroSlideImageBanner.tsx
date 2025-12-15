@@ -63,7 +63,7 @@ export function HeroSlideImageBanner({
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full min-h-[70vh] lg:min-h-full">
       {/* Banner Image */}
       {imageUrl && (
         <div className="absolute inset-0 z-0">
@@ -74,6 +74,7 @@ export function HeroSlideImageBanner({
             className="object-cover"
             sizes="100vw"
             priority
+            fetchPriority="high"
           />
           {/* Overlay */}
           {overlay !== 'none' && (
@@ -84,7 +85,7 @@ export function HeroSlideImageBanner({
 
       {/* CTA Buttons */}
       {(primaryCtaLabel || secondaryCtaLabel) && (
-        <div className={`container mx-auto px-6 py-20 relative z-10 flex justify-center ${getContentPositionClasses()} min-h-full`}>
+        <div className={`container mx-auto px-6 py-6 lg:py-20 relative z-10 flex justify-center ${getContentPositionClasses()} h-full`}>
           <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
             <HeroButtons 
               primaryLabel={primaryCtaLabel}
@@ -98,3 +99,4 @@ export function HeroSlideImageBanner({
     </div>
   );
 }
+

@@ -6,6 +6,33 @@ export const heroSection = defineType({
   type: 'object',
   fields: [
     defineField({
+      name: 'navLinkTitle',
+      title: 'Navigation Link Title',
+      type: 'string',
+      description: 'Text to display in the navigation menu (e.g., "Home"). Leave empty to hide from menu.',
+    }),
+    defineField({
+      name: 'navLinkId',
+      title: 'Navigation Link ID',
+      type: 'string',
+      description: 'Anchor ID for navigation (e.g., "home"). Should match the section ID on the page.',
+      initialValue: 'home',
+    }),
+    defineField({
+      name: 'isActive',
+      title: 'Active',
+      type: 'boolean',
+      initialValue: true,
+      description: 'Show this section on the page. Uncheck to hide it.',
+    }),
+    defineField({
+      name: 'includeInNavbar',
+      title: 'Include in Navigation',
+      type: 'boolean',
+      initialValue: true,
+      description: 'Include this section in the navigation menu. Uncheck to hide from menu.',
+    }),
+    defineField({
       name: 'displayMode',
       title: 'Display mode',
       type: 'string',

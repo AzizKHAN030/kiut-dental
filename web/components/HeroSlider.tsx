@@ -158,16 +158,16 @@ export function HeroSlider({ slides, autoplay = false, autoplayInterval = 5 }: H
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50 pt-20">
+    <section className="relative min-h-[80vh] lg:h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50 pt-20">
       {/* Animated background elements */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl animate-pulse-slow" />
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
       {/* Embla Container */}
-      <div className="w-full relative z-10" ref={emblaRef}>
-        <div className="flex">
+      <div className="w-full h-full relative z-10" ref={emblaRef}>
+        <div className="flex h-full">
           {slides.map((slide, index) => (
-            <div key={index} className="flex-[0_0_100%] min-w-0">
+            <div key={index} className="flex-[0_0_100%] min-w-0 h-full">
               {renderSlide(slide, index)}
             </div>
           ))}
@@ -195,18 +195,20 @@ export function HeroSlider({ slides, autoplay = false, autoplayInterval = 5 }: H
           </button>
 
           {/* Dots Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 items-center">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => scrollTo(index)}
-                className={`transition-all duration-300 rounded-full ${
+                className="group transition-all duration-300 min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
+                aria-label={`Go to slide ${index + 1}`}
+              >
+                <span className={`block rounded-full transition-all duration-300 ${
                   index === currentIndex
                     ? 'w-8 h-3 bg-blue-600'
-                    : 'w-3 h-3 bg-gray-400 hover:bg-gray-600'
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
+                    : 'w-3 h-3 bg-gray-400 group-hover:bg-gray-600'
+                }`} />
+              </button>
             ))}
           </div>
         </>

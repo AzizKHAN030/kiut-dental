@@ -75,7 +75,7 @@ export function HeroSlideBackground({
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full min-h-[70vh] lg:min-h-full">
       {/* Background Image */}
       {imageUrl && (
         <div className="absolute inset-0 z-0">
@@ -86,6 +86,7 @@ export function HeroSlideBackground({
             className="object-cover"
             sizes="100vw"
             priority
+            fetchPriority="high"
           />
           {/* Subtle overlay for better contrast with light content box */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-transparent to-cyan-900/10" />
@@ -93,7 +94,7 @@ export function HeroSlideBackground({
       )}
 
       {/* Content */}
-      <div className={`container mx-auto px-6 py-20 relative z-10 ${getContainerClasses()}`}>
+      <div className={`container mx-auto px-6 py-6 lg:py-20 relative z-10 h-full ${getContainerClasses()}`}>
         <div className={getContentClasses()}>
           {/* Beautiful gradient background box for text content */}
           <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-2xl border border-blue-100/50 overflow-hidden">
@@ -148,7 +149,7 @@ export function HeroSlideBackground({
 
               {/* Stats */}
               {stats && stats.length > 0 && (
-                <div className="grid grid-cols-3 gap-6 mt-12 pt-12 border-t border-blue-200 animate-fade-in-up" style={{ animationDelay: '1000ms' }}>
+                <div className="hidden lg:grid grid-cols-3 gap-6 mt-12 pt-12 border-t border-blue-200 animate-fade-in-up" style={{ animationDelay: '1000ms' }}>
                   {stats.map((stat, index) => (
                     <div key={index}>
                       <div className="text-blue-600 mb-1 text-2xl font-semibold">{stat.value}</div>

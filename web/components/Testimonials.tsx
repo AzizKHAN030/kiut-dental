@@ -68,7 +68,7 @@ export function Testimonials({ data }: TestimonialsProps) {
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 {/* Quote icon */}
-                <div className="absolute top-6 right-6 text-blue-100 animate-rotate-slow">
+                <div className="absolute top-6 right-6 text-blue-100">
                   <Quote className="w-12 h-12" />
                 </div>
 
@@ -107,7 +107,7 @@ export function Testimonials({ data }: TestimonialsProps) {
 
                 {/* Treatment badge */}
                 {testimonial.treatment && (
-                  <div className="absolute top-6 left-6 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
+                  <div className="absolute bottom-6 right-6 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
                     {testimonial.treatment.name}
                   </div>
                 )}

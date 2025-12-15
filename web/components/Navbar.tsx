@@ -3,25 +3,28 @@
 import { useEffect, useState } from 'react';
 import { Menu, Globe, X } from 'lucide-react';
 
-const navLinks = [
-  { name: 'Benefits', href: '#benefits' },
-  { name: 'Services', href: '#services' },
-  { name: 'Pricing', href: '#pricing' },
-  { name: 'Process', href: '#process' },
-  { name: 'Gallery', href: '#gallery' },
-  { name: 'Testimonials', href: '#testimonials' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Contact', href: '#contact' },
-];
-
 const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 
 interface NavbarProps {
   locale?: string;
   locales?: Array<{ code: string; name: string; flag: string }>;
+  navLinks?: Array<{ name: string; href: string }>;
 }
 
-export function Navbar({ locale: initialLocale, locales: providedLocales }: NavbarProps = { locale: undefined, locales: undefined }) {
+export function Navbar({ locale: initialLocale, locales: providedLocales, navLinks: providedNavLinks }: NavbarProps = { locale: undefined, locales: undefined, navLinks: undefined }) {
+  // Default nav links fallback
+  const defaultNavLinks = [
+    { name: 'Benefits', href: '#benefits' },
+    { name: 'Services', href: '#services' },
+    { name: 'Pricing', href: '#pricing' },
+    { name: 'Process', href: '#process' },
+    { name: 'Gallery', href: '#gallery' },
+    { name: 'Testimonials', href: '#testimonials' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Contact', href: '#contact' },
+  ];
+  
+  const navLinks = providedNavLinks || defaultNavLinks;
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -82,7 +85,7 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
       
       // Remove any existing locale prefix
       const pathWithoutLocale = currentPath.replace(localePattern, '/');
-      setIsOnBlogPage(pathWithoutLocale.startsWith('/blog'));
+      setIsOnBlogPage(pathWithoutLocale === '/blog');
     };
     
     checkBlogPage();
@@ -139,37 +142,63 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
     
     if (!isOnHomePage) return;
 
-    const sections = document.querySelectorAll('[id^="home"], [id^="benefits"], [id^="services"], [id^="pricing"], [id^="process"], [id^="testimonials"], [id^="contact"]');
-    
-    if (sections.length === 0) return;
+    let observer: IntersectionObserver | null = null;
+    let observedSections: Element[] = [];
 
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the upper portion of viewport
-      threshold: 0,
-    };
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(() => {
+      // Find all sections with IDs on the page (not just those in navbar)
+      // This ensures URL updates even for sections not included in navigation
+      // We look for divs with IDs inside the main element
+      const mainElement = document.querySelector('main');
+      if (!mainElement) return;
+      
+      // Get all elements with IDs inside main (sections)
+      observedSections = Array.from(mainElement.querySelectorAll('[id]')).filter((el) => {
+        const id = el.getAttribute('id');
+        // Exclude empty IDs and common non-section IDs if needed
+        return id && id.trim() !== '';
+      });
+      
+      if (observedSections.length === 0) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          if (id) {
-            // Update URL without scrolling
-            const newUrl = `${window.location.pathname}#${id}`;
-            if (window.location.href !== newUrl) {
-              window.history.replaceState(null, '', newUrl);
+      const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the upper portion of viewport
+        threshold: 0,
+      };
+
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            if (id) {
+              // Update URL without scrolling
+              const newUrl = `${window.location.pathname}#${id}`;
+              if (window.location.href !== newUrl) {
+                window.history.replaceState(null, '', newUrl);
+              }
             }
           }
-        }
-      });
-    }, observerOptions);
+        });
+      }, observerOptions);
 
-    sections.forEach((section) => observer.observe(section));
+      // Store reference to observer for TypeScript
+      const currentObserver = observer;
+      observedSections.forEach((section) => currentObserver.observe(section));
+    }, 100);
 
     return () => {
-      sections.forEach((section) => observer.unobserve(section));
+      clearTimeout(timeoutId);
+      if (observer) {
+        observedSections.forEach((section) => {
+          if (observer) {
+            observer.unobserve(section);
+          }
+        });
+      }
     };
-  }, []);
+  }, [languages]); // Removed navLinks dependency since we now observe all sections, not just navbar links
 
   // Handle smooth scroll for anchor links
   const handleLinkClick = (href: string, e?: React.MouseEvent<HTMLAnchorElement>) => {
@@ -252,15 +281,16 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
   return (
     <>
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50`}
+      >
+        <div className={`w-full max-w-full px-6 transition-all duration-300 ${
           isScrolled 
             ? 'bg-white/80 backdrop-blur-lg shadow-lg' 
             : isOnBlogPage
               ? 'bg-transparent'
               : 'bg-blue-600'
-        }`}
-      >
-        <div className="container mx-auto px-6">
+        }`}>
+          <div className="container mx-auto">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <a 
@@ -338,7 +368,7 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(prev => !prev)}
-                className="lg:hidden p-2 rounded-lg transition-colors text-white hover:bg-white/10"
+                className={`lg:hidden p-2 rounded-lg transition-colors hover:bg-white/10 ${isScrolled ? 'text-gray-700' : 'text-white'}`}
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
@@ -358,6 +388,7 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
               </a>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -371,9 +402,10 @@ export function Navbar({ locale: initialLocale, locales: providedLocales }: Navb
             onClick={() => setIsMobileMenuOpen(false)}
           />
           <div 
-            className={`absolute top-0 right-0 bottom-0 w-80 bg-white shadow-2xl transition-transform duration-300 ${
+            className={`absolute top-0 right-0 bottom-0 w-80 !bg-white shadow-2xl transition-transform duration-300 overflow-y-auto ${
               isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
+            style={{ backgroundColor: '#ffffff', opacity: 1 }}
           >
             <button
               type="button"

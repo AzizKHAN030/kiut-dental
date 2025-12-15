@@ -340,3 +340,6 @@ interface HeroSlideImageBannerProps {
 **Congratulations!** 🎉 
 
 You now have 4 versatile hero slide types to create any style of hero section you need!
+
+
+

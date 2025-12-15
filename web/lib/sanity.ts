@@ -671,3 +671,385 @@ export async function getPriceComparisonData(locale: string = 'en') {
   }
 }
 
+// Get all page sections in order with complete data
+export async function getPageSections(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type,
+      navLinkTitle,
+      navLinkId,
+      isActive,
+      includeInNavbar,
+      // Hero Section
+      _type == "heroSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        displayMode,
+        autoplay,
+        autoplayInterval,
+        slides[] {
+          _type,
+          tagline,
+          heading,
+          body,
+          contentPosition,
+          overlay,
+          primaryCtaLabel,
+          primaryCtaHref,
+          secondaryCtaLabel,
+          secondaryCtaHref,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          stats[] {
+            value,
+            label
+          },
+          badgeTitle,
+          badgeSubtitle
+        }
+      },
+      // Feature Cards Section
+      _type == "featureCardsSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        items[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          iconBgColor {
+            hex
+          },
+          title,
+          description,
+          badge
+        }
+      },
+      // Popular Treatments Section
+      _type == "popularTreatmentsSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        treatments[] {
+          nameSource,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          customName,
+          shortDescription,
+          startingPrice,
+          duration,
+          badge,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      },
+      // Price Comparison Section
+      _type == "priceComparisonSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        countries[] {
+          country-> {
+            name,
+            code,
+            flag
+          },
+          isHighlighted
+        },
+        treatments[] {
+          nameSource,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          customName,
+          prices[] {
+            country-> {
+              code,
+              name
+            },
+            price
+          }
+        },
+        baseCountry-> {
+          code,
+          name
+        },
+        footerNotes[] {
+          title,
+          description
+        }
+      },
+      // Additional Services Section
+      _type == "additionalServicesSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        badgeText,
+        services[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          iconBgColor {
+            hex
+          },
+          title,
+          description,
+          included
+        },
+        infoCards[] {
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          title,
+          description,
+          bgColor {
+            hex
+          }
+        }
+      },
+      // Process Section
+      _type == "processSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        steps[] {
+          title,
+          description,
+          icon {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      },
+      // Gallery Section
+      _type == "gallerySection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        images[] {
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          },
+          title,
+          description
+        }
+      },
+      // Testimonials Section
+      _type == "testimonialsSection" => {
+        _type,
+        navLinkTitle,
+        navLinkId,
+        isActive,
+        includeInNavbar,
+        title,
+        subtitle,
+        testimonials[] {
+          name,
+          country,
+          treatment-> {
+            _id,
+            name,
+            slug
+          },
+          rating,
+          text,
+          image {
+            asset-> {
+              _id,
+              url,
+              metadata {
+                dimensions {
+                  width,
+                  height
+                }
+              }
+            },
+            alt
+          }
+        }
+      }
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    // Return sections array in order, filtering out:
+    // - null/undefined sections
+    // - inactive sections (isActive === false, default to true if not set)
+    return result?.sections?.filter((section: any) => 
+      section && 
+      section._type && 
+      (section.isActive !== false) // Default to true if not set
+    ) || [];
+  } catch (error) {
+    console.error('Error fetching page sections from Sanity:', error);
+    return [];
+  }
+}
+
+// Navigation links query - fetches all sections with nav link info
+export async function getNavLinks(locale: string = 'en') {
+  const query = `*[_type == "page" && (locale._ref == *[_type == "locale" && code == $locale][0]._id || locale->code == $locale || locale == $locale) && (slug.current == "home" || slug.current == $slugWithLocale)][0] {
+    sections[] {
+      _type,
+      navLinkTitle,
+      navLinkId,
+      isActive,
+      includeInNavbar
+    }
+  }`;
+  
+  try {
+    const slugWithLocale = `home-${locale}`;
+    const result = await client.fetch(query, { locale, slugWithLocale });
+    
+    // Filter sections that have navLinkTitle and navLinkId, and map them to nav links
+    const navLinks: Array<{ name: string; href: string }> = [];
+    
+    if (result?.sections) {
+      result.sections.forEach((section: any) => {
+        // Only include sections that:
+        // - Have both navLinkTitle and navLinkId
+        // - Are active (isActive !== false, default to true)
+        // - Have includeInNavbar enabled (includeInNavbar !== false, default to true)
+        if (
+          section.navLinkTitle && 
+          section.navLinkId &&
+          (section.isActive !== false) &&
+          (section.includeInNavbar !== false)
+        ) {
+          navLinks.push({
+            name: section.navLinkTitle,
+            href: `#${section.navLinkId}`,
+          });
+        }
+      });
+    }
+    
+    // Add hardcoded links for Blog and Contact (these are always shown)
+    navLinks.push(
+      { name: 'Blog', href: '/blog' },
+      { name: 'Contact', href: '#contact' }
+    );
+    
+    return navLinks;
+  } catch (error) {
+    console.error('Error fetching nav links from Sanity:', error);
+    // Return default nav links on error
+    return [
+      { name: 'Benefits', href: '#benefits' },
+      { name: 'Services', href: '#services' },
+      { name: 'Pricing', href: '#pricing' },
+      { name: 'Process', href: '#process' },
+      { name: 'Gallery', href: '#gallery' },
+      { name: 'Testimonials', href: '#testimonials' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Contact', href: '#contact' },
+    ];
+  }
+}
+

@@ -56,3 +56,6 @@ The blog post schema is defined in `schemaTypes/blogPost.ts` and includes:
 
 The blog link has been added to the navbar. It appears between "Testimonials" and "Contact".
 
+
+
+

@@ -48,12 +48,12 @@ export function HeroSlideImageLeft({
   const imageAlt = image?.alt || heading;
 
   return (
-    <div className="container mx-auto px-6 py-20 relative z-10">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <div className="container mx-auto px-6 py-6 lg:py-20 relative z-10 h-full flex items-center">
+      <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
         {/* Left content - Image with animated elements */}
         {imageUrl && (
           <div className="relative animate-fade-in-left">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-102 aspect-[4/3]">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-102 aspect-[4/3] lg:aspect-[4/5] lg:h-[600px]">
               <Image
                 src={imageUrl}
                 alt={imageAlt}
@@ -61,6 +61,7 @@ export function HeroSlideImageLeft({
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 priority
+                fetchPriority="high"
               />
             </div>
 
@@ -139,7 +140,7 @@ export function HeroSlideImageLeft({
 
           {/* Stats */}
           {stats && stats.length > 0 && (
-            <div className="grid grid-cols-3 gap-6 mt-12 pt-12 border-t border-gray-200 animate-fade-in-up" style={{ animationDelay: '1000ms' }}>
+            <div className="hidden lg:grid grid-cols-3 gap-6 mt-12 pt-12 border-t border-gray-200 animate-fade-in-up" style={{ animationDelay: '1000ms' }}>
               {stats.map((stat, index) => (
                 <div key={index}>
                   <div className="text-blue-600 mb-1 text-2xl font-semibold">{stat.value}</div>

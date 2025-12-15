@@ -323,3 +323,6 @@ Secondary CTA: "Terms & Conditions"
 - See **HERO_LAYOUTS_GUIDE.md** for all slide types
 - See **QUICK_START.md** for basic setup
 - See **CONTENT_POSITION_GUIDE.md** for Background slide positioning
+
+
+

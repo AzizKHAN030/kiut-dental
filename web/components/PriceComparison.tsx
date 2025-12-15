@@ -133,7 +133,7 @@ export function PriceComparison({ data }: PriceComparisonProps) {
                   {countries.map((countryItem) => (
                     <th
                       key={countryItem.country.code}
-                      className={`text-center p-6 ${countryItem.isHighlighted ? 'bg-green-500' : ''}`}
+                      className={`text-center p-6 ${countryItem.isHighlighted ? 'bg-green-600' : ''}`}
                     >
                       {countryItem.isHighlighted ? (
                     <div className="flex items-center justify-center gap-2">
@@ -268,7 +268,7 @@ export function PriceComparison({ data }: PriceComparisonProps) {
               </div>
               <div>
                         {note.title && (
-                          <h4 className="text-gray-900 mb-2">{note.title}</h4>
+                          <h3 className="text-gray-900 mb-2 text-lg font-semibold">{note.title}</h3>
                         )}
                         {note.description && (
                           <p className="text-gray-600 text-sm">{note.description}</p>

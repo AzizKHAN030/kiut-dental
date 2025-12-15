@@ -161,8 +161,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
   return (
     <div className="min-h-screen bg-white">
       <Navbar locale={locale} locales={locales} />
-      {/* Back Button */}
-      <div className="container mx-auto px-6 pt-8">
+      <main>
+        {/* Back Button */}
+        <div className="container mx-auto px-6 pt-8">
         <Link
           href={getLocalizedPath('/blog', locale)}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
@@ -322,6 +323,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           </div>
         </div>
       </article>
+      </main>
     </div>
   );
 }
